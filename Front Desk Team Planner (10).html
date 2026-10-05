@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Front Desk Team Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#F3F6F5; --surface:#FFFFFF; --ink:#1D2A30; --muted:#5B6B72; --line:#D7E0DF;
+  --reef:#0E5A6B; --ilima:#E3A82B; --plc:#0E7C86; --kap:#4C8A3F; --kai:#2F5FA8; --warn:#B4412F;
+  --warn-bg:#FBEDEA; --chip:#E8EFEE;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121A1D; --surface:#1A252A; --ink:#E7EEEE; --muted:#9AAAB0; --line:#2C3A40;
+    --reef:#5CC2D0; --ilima:#F0BE52; --plc:#4FC0C8; --kap:#8BC77B; --kai:#7FA6E8; --warn:#F08A76;
+    --warn-bg:#3A2420; --chip:#24323A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121A1D; --surface:#1A252A; --ink:#E7EEEE; --muted:#9AAAB0; --line:#2C3A40;
+  --reef:#5CC2D0; --ilima:#F0BE52; --plc:#4FC0C8; --kap:#8BC77B; --kai:#7FA6E8; --warn:#F08A76;
+  --warn-bg:#3A2420; --chip:#24323A;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:1rem;line-height:1.55}
+h1,h2,h3{font-family:"Bricolage Grotesque","Atkinson Hyperlegible",system-ui,sans-serif;line-height:1.15;margin:0}
+.wrap{max-width:1100px;margin:0 auto;padding:1.5rem 1.25rem 4rem}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--ilima);outline-offset:2px}
+
+/* Header */
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.25rem}
+header.top h1{font-size:clamp(1.9rem,4.5vw,2.8rem);font-weight:800;letter-spacing:-.02em}
+header.top p{margin:.25rem 0 0;color:var(--muted)}
+.shift-toggle{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:3px}
+.shift-toggle button{border:0;background:transparent;color:var(--muted);padding:.45rem .95rem;border-radius:999px;font-weight:700}
+.shift-toggle button[aria-pressed="true"]{background:var(--reef);color:var(--surface)}
+
+/* Now board — the signature element */
+.now{background:var(--reef);color:#fff;border-radius:22px;padding:1.4rem 1.4rem 1.2rem;margin-bottom:2.25rem;position:relative;overflow:hidden}
+:root[data-theme="dark"] .now, .now{--nowink:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .now{background:#0F3D48}}
+:root[data-theme="dark"] .now{background:#0F3D48}
+.now::after{content:"";position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:var(--ilima);opacity:.9}
+.now h2{font-size:1.5rem;font-weight:700;position:relative;z-index:1;max-width:70%}
+.now .clock{position:relative;z-index:1;opacity:.85;margin:.2rem 0 1rem}
+.now-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.75rem;position:relative;z-index:1}
+.now-card{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:.85rem 1rem}
+.now-card strong{display:block;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:1.05rem}
+.now-card span{display:block;opacity:.9;font-size:.95rem}
+
+section{margin-bottom:2.5rem}
+.sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:1rem;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:.5rem;margin-bottom:1.1rem}
+.sec-head h2{font-size:1.45rem;font-weight:700}
+.sec-head p{margin:0;color:var(--muted);font-size:.95rem}
+
+/* Locations */
+.loc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem}
+.loc{background:var(--surface);border:1px solid var(--line);border-top:6px solid var(--c);border-radius:6px 6px 14px 14px;padding:1rem 1.1rem}
+.loc h3{font-size:1.25rem;color:var(--c)}
+.people{display:flex;flex-wrap:wrap;gap:.4rem;margin:.65rem 0 0}
+.person{background:var(--chip);border-radius:999px;padding:.25rem .75rem;font-weight:700;font-size:.95rem}
+.person.poc{background:var(--c);color:var(--surface)}
+.loc small{display:block;margin-top:.55rem;color:var(--muted)}
+
+.lead{display:grid;grid-template-columns:minmax(220px,1fr) 2fr;background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--ilima);border-radius:6px 14px 14px 6px;overflow:hidden}
+@media (max-width:720px){.lead{grid-template-columns:1fr}}
+.lead-main{padding:1.1rem 1.2rem;background:color-mix(in srgb,var(--ilima) 14%,transparent)}
+.lead-main .name{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:1.6rem;font-weight:800;line-height:1.1}
+.lead-main .role{color:var(--muted);margin-bottom:.9rem}
+.lead-main h3{font-size:1rem;margin-bottom:.3rem}
+.lead-main p{margin:0}
+.lead-list{margin:0;padding:.4rem 0;list-style:none}
+.lead-list li{padding:.6rem 1.2rem;border-bottom:1px solid var(--line)}
+.lead-list li:last-child{border-bottom:0}
+.lead-list b{display:block}
+.lead-list span{color:var(--muted)}
+.shared{margin-top:1rem;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.shared-head{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem .75rem;padding:.85rem 1.1rem;background:var(--chip);border-bottom:1px solid var(--line)}
+.shared-head h3{font-size:1.05rem;margin-right:.25rem}
+.shared-head .people{margin:0}
+.shared-head .person{background:var(--surface)}
+.duties{display:grid;grid-template-columns:repeat(3,1fr)}
+@media (max-width:720px){.duties{grid-template-columns:1fr}}
+.duty{padding:1rem 1.1rem;border-left:1px solid var(--line)}
+.duty:first-child{border-left:0}
+@media (max-width:720px){.duty{border-left:0;border-top:1px solid var(--line)}.duty:first-child{border-top:0}}
+.duty h3{font-size:1.05rem;margin-bottom:.3rem}
+.duty p{margin:0;color:var(--muted)}
+.when{display:inline-block;font-size:.85rem;font-weight:700;padding:.1rem .55rem;border-radius:6px;margin-bottom:.5rem;background:var(--chip)}
+.when.am{background:color-mix(in srgb,var(--ilima) 30%,transparent)}
+.when.pm{background:color-mix(in srgb,var(--reef) 22%,transparent)}
+
+/* Call team */
+.callteam{display:grid;grid-template-columns:minmax(200px,1fr) 2fr;gap:1rem}
+@media (max-width:720px){.callteam{grid-template-columns:1fr}}
+.roster{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1rem 1.1rem}
+.roster h3{font-size:1.05rem;margin-bottom:.5rem}
+ol.priority{margin:0;padding:0;list-style:none;counter-reset:p;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+ol.priority li{counter-increment:p;display:grid;grid-template-columns:2.4rem 1fr;gap:.5rem;padding:.85rem 1.1rem;border-bottom:1px solid var(--line)}
+ol.priority li:last-child{border-bottom:0}
+ol.priority li::before{content:counter(p);font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:1.4rem;color:var(--reef);line-height:1.1}
+ol.priority b{display:block}
+ol.priority span{color:var(--muted)}
+.note{margin-top:.75rem;color:var(--muted);font-size:.92rem}
+
+/* POC */
+.poc-table{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+table{border-collapse:collapse;width:100%;min-width:520px}
+th,td{text-align:left;padding:.75rem 1rem;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:.95rem;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+.dot{display:inline-block;width:.7rem;height:.7rem;border-radius:50%;background:var(--c);margin-right:.45rem;vertical-align:middle}
+
+.ins-wrap{margin-top:1.25rem}
+.ins-wrap h3{font-size:1.15rem;margin-bottom:.25rem}
+.ins-wrap > p{margin:0 0 .75rem;color:var(--muted)}
+.ins-table table{min-width:640px}
+.ins-table td:first-child{font-weight:700}
+.ins-table td:first-child small{display:block;font-weight:400;color:var(--muted)}
+.st{display:inline-block;font-weight:700;font-size:.9rem;padding:.2rem .55rem;border-radius:6px;white-space:nowrap}
+.st.ok{background:color-mix(in srgb,var(--kap) 20%,transparent);color:var(--kap)}
+.st.no{background:var(--warn-bg);color:var(--warn)}
+.st.cond{background:color-mix(in srgb,var(--ilima) 28%,transparent);color:var(--ink)}
+.st + small{display:block;color:var(--muted);font-size:.85rem;margin-top:.2rem}
+.alert{display:flex;gap:.75rem;background:var(--warn-bg);color:var(--ink);border-radius:12px;padding:.8rem 1rem;margin-top:.75rem}
+.alert b{color:var(--warn)}
+.providers{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-top:1rem}
+.prov{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--warn);border-radius:6px 14px 14px 6px;padding:1rem 1.1rem}
+.prov h3{font-size:1.15rem}
+.prov label{display:block;font-size:.9rem;color:var(--muted);margin:.5rem 0 .35rem}
+.tags{display:flex;flex-wrap:wrap;gap:.35rem;min-height:1.9rem}
+.tag{display:inline-flex;align-items:center;gap:.3rem;background:var(--warn-bg);color:var(--warn);font-weight:700;border-radius:6px;padding:.2rem .3rem .2rem .6rem;font-size:.92rem}
+.tag button{border:0;background:transparent;color:inherit;font-weight:700;padding:0 .3rem;line-height:1}
+.empty{color:var(--muted);font-size:.9rem;font-style:italic}
+.add-row{display:flex;gap:.4rem;margin-top:.6rem}
+.add-row input{flex:1;min-width:0;font:inherit;padding:.45rem .6rem;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.add-row button{border:0;background:var(--ink);color:var(--surface);border-radius:8px;padding:.45rem .8rem;font-weight:700}
+
+/* Checklists */
+.check-head-actions{display:flex;gap:.5rem;align-items:center}
+.ghost{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:.4rem .8rem;font-weight:700;font-size:.9rem}
+.who{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.who button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:.35rem .85rem;font-weight:700}
+.who button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.checklist{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:.4rem 0}
+.checklist h3{font-size:1rem;color:var(--muted);padding:.6rem 1.1rem .2rem}
+.checklist label{display:flex;gap:.7rem;align-items:flex-start;padding:.55rem 1.1rem;cursor:pointer}
+.checklist input{width:1.15rem;height:1.15rem;margin-top:.2rem;accent-color:var(--reef);flex:none}
+.checklist input:checked + span{text-decoration:line-through;color:var(--muted)}
+.progress{height:6px;background:var(--chip);border-radius:999px;margin:.25rem 1.1rem .8rem;overflow:hidden}
+.progress div{height:100%;background:var(--ilima);width:0;transition:width .3s}
+@media (prefers-reduced-motion:reduce){.progress div{transition:none}}
+footer{color:var(--muted);font-size:.88rem;border-top:1px solid var(--line);padding-top:1rem}
+
+/* Tabs */
+.tabs{display:flex;gap:.25rem;border-bottom:1px solid var(--line);margin:-.25rem 0 1.5rem}
+.tabs button{border:0;background:transparent;color:var(--muted);font-weight:700;padding:.65rem 1rem;border-bottom:3px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ilima)}
+.tabs .count{display:inline-block;min-width:1.4rem;padding:0 .4rem;margin-left:.35rem;border-radius:999px;background:var(--warn);color:var(--surface);font-size:.8rem;line-height:1.4rem;text-align:center}
+[hidden]{display:none !important}
+
+/* Notes */
+.notes-layout{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:1.25rem;align-items:start}
+@media (max-width:820px){.notes-layout{grid-template-columns:1fr}}
+.composer{background:var(--surface);border:1px solid var(--line);border-top:6px solid var(--ilima);border-radius:6px 6px 14px 14px;padding:1.1rem 1.2rem;position:sticky;top:calc(env(safe-area-inset-top,0px) + 1rem)}
+@media (max-width:820px){.composer{position:static}}
+.composer h3{font-size:1.2rem;margin-bottom:.2rem}
+.composer > p{margin:0 0 .9rem;color:var(--muted);font-size:.95rem}
+.field{margin-bottom:.85rem}
+.field > label,.field > .lbl{display:block;font-weight:700;font-size:.92rem;margin-bottom:.35rem}
+.field select,.field textarea{width:100%;font:inherit;padding:.55rem .65rem;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.field textarea{min-height:7rem;resize:vertical}
+.types{display:flex;flex-wrap:wrap;gap:.35rem}
+.types button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:.3rem .75rem;font-weight:700;font-size:.9rem}
+.types button[aria-pressed="true"]{background:var(--t);border-color:var(--t);color:#fff}
+.primary{width:100%;border:0;background:var(--reef);color:var(--surface);border-radius:10px;padding:.7rem;font-weight:700}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+.form-msg{min-height:1.3rem;margin:.5rem 0 0;font-size:.9rem;color:var(--muted)}
+.form-msg.err{color:var(--warn)}
+
+.filters{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-bottom:1rem}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--surface);padding:3px}
+.seg button{border:0;background:transparent;color:var(--muted);padding:.3rem .8rem;border-radius:999px;font-weight:700;font-size:.9rem}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.filters select{font:inherit;font-size:.9rem;padding:.35rem .6rem;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink)}
+.day-head{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:1.05rem;margin:1.2rem 0 .5rem;color:var(--muted)}
+.day-head:first-child{margin-top:0}
+.note-card{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--t);border-radius:6px 14px 14px 6px;padding:.9rem 1.1rem;margin-bottom:.65rem}
+.note-card.done{opacity:.72}
+.note-meta{display:flex;flex-wrap:wrap;gap:.35rem .6rem;align-items:center;font-size:.9rem;color:var(--muted)}
+.note-meta .ttag{background:color-mix(in srgb,var(--t) 16%,transparent);color:var(--t);font-weight:700;padding:.1rem .5rem;border-radius:6px}
+.note-meta .from{color:var(--ink);font-weight:700}
+.note-text{margin:.5rem 0 0;white-space:pre-wrap;word-wrap:break-word}
+.status{margin-left:auto;font-weight:700;font-size:.85rem;padding:.1rem .55rem;border-radius:6px;background:var(--chip);color:var(--ink)}
+.status.open{background:var(--warn-bg);color:var(--warn)}
+.reply{margin-top:.65rem;padding:.55rem .8rem;border-radius:8px;background:color-mix(in srgb,var(--ilima) 16%,transparent)}
+.reply b{display:block;font-size:.85rem}
+.note-actions{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.7rem}
+.note-actions button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:.3rem .7rem;font-weight:700;font-size:.85rem}
+.note-actions .del{color:var(--warn)}
+.reply-form{display:flex;gap:.4rem;margin-top:.6rem}
+.reply-form input{flex:1;min-width:0;font:inherit;padding:.4rem .6rem;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.reply-form button{border:0;background:var(--ink);color:var(--surface);border-radius:8px;padding:.4rem .8rem;font-weight:700}
+.empty-state{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:1.5rem;color:var(--muted);text-align:center}
+.primary.wa{display:block;text-align:center;text-decoration:none;background:#1F8A4C}
+.primary.wa[aria-disabled="true"]{opacity:.55}
+.wa-side{display:grid;gap:1rem}
+.wa-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1rem 1.2rem}
+.wa-card h3{font-size:1.1rem;margin-bottom:.25rem}
+.wa-card p{margin:0;color:var(--muted)}
+.wa-card.subtle{background:transparent}
+.wa-btn{display:inline-block;margin-top:.75rem;background:#1F8A4C;color:#fff;text-decoration:none;font-weight:700;border-radius:10px;padding:.55rem 1rem}
+.wa-num{margin-top:.5rem !important;font-weight:700;color:var(--ink) !important}
+.wa-preview{margin:.4rem 0 0;white-space:pre-wrap;word-wrap:break-word;font-family:inherit;background:color-mix(in srgb,#1F8A4C 10%,transparent);border-radius:10px 10px 10px 2px;padding:.75rem .9rem;color:var(--ink);min-height:3rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.75rem;margin:1rem 0 1.25rem}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:.85rem 1rem}
+.stat .v{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:2rem;font-weight:800;line-height:1.1}
+.stat .l{color:var(--muted);font-size:.92rem}
+.stat .d{font-size:.85rem;font-weight:700;margin-top:.2rem}
+.stat .d.up{color:var(--kap)} .stat .d.down{color:var(--warn)}
+.stats{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start}
+@media (max-width:820px){.report-grid{grid-template-columns:1fr}}
+.rcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.2rem}
+.rcard h3{font-size:1.2rem}
+.rsub{margin:.15rem 0 .8rem;color:var(--muted);font-size:.92rem}
+.bar-row{display:grid;grid-template-columns:minmax(110px,40%) 1fr 3.2rem;gap:.6rem;align-items:center;padding:.3rem 0}
+.bar-row .bl{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{height:.9rem;background:var(--chip);border-radius:999px;overflow:hidden}
+.bar-track div{height:100%;background:var(--b,var(--reef));border-radius:999px}
+.bar-row .bv{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.bar-row .bv small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+table.mini{min-width:0}
+table.mini th,table.mini td{padding:.45rem .7rem;font-size:.92rem}
+table.mini td.n,table.mini th.n{text-align:right;font-variant-numeric:tabular-nums}
+.more{border:0;background:transparent;color:var(--reef);font-weight:700;padding:.4rem 0;font-size:.9rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>Front desk team planner</h1>
+    <p>PLC, Kapolei and Kailua — who covers what, and when.</p>
+  </div>
+  <div class="shift-toggle" role="group" aria-label="Choose shift">
+    <button type="button" data-shift="auto" aria-pressed="true">Auto</button>
+    <button type="button" data-shift="am" aria-pressed="false">Morning</button>
+    <button type="button" data-shift="pm" aria-pressed="false">Afternoon</button>
+  </div>
+</header>
+
+<div class="tabs" role="tablist" aria-label="Planner sections">
+  <button type="button" role="tab" id="tab-planner" aria-controls="view-planner" aria-selected="true">Planner</button>
+  <button type="button" role="tab" id="tab-notes" aria-controls="view-notes" aria-selected="false">Message MJ</button>
+  <button type="button" role="tab" id="tab-report" aria-controls="view-report" aria-selected="false">Bookings report</button>
+</div>
+
+<div id="view-planner" role="tabpanel" aria-labelledby="tab-planner">
+
+<div class="now" aria-live="polite">
+  <h2 id="nowTitle">Morning shift</h2>
+  <div class="clock" id="nowClock"></div>
+  <div class="now-grid" id="nowGrid"></div>
+</div>
+
+<!-- Team lead -->
+<section>
+  <div class="sec-head">
+    <h2>Team lead</h2>
+    <p>Oversees all 3 locations and the call team</p>
+  </div>
+  <div class="lead">
+    <div class="lead-main">
+      <div class="name">MJ</div>
+      <div class="role">Team Lead</div>
+      <h3>Main task</h3>
+      <p>Insurance verification and treatment planning.</p>
+    </div>
+    <ul class="lead-list">
+      <li><b>Monitor cancellation rate and production</b><span>Across PLC, Kapolei and Kailua.</span></li>
+      <li><b>Generate call lists</b><span>Have lists ready for the team to work.</span></li>
+      <li><b>Watch call rate and opportunity</b><span>Step in when either one starts dropping.</span></li>
+      <li><b>Call listening</b><span>Listen in on team calls for quality.</span></li>
+      <li><b>Review Shaira's calls and bookings</b><span>Check her call handling and the appointments she books.</span></li>
+      <li><b>New patient list — every Friday</b><span>Generate and update the NP list so Keyvin and Raine can call it.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- Location teams -->
+<section>
+  <div class="sec-head">
+    <h2>Location teams</h2>
+    <p>Filled chip = location POC</p>
+  </div>
+  <div class="loc-grid">
+    <div class="loc" style="--c:var(--plc)">
+      <h3>PLC</h3>
+      <div class="people"><span class="person">Pai</span><span class="person">Shaira</span></div>
+      <small>POC: Keyvin (call team)</small>
+    </div>
+    <div class="loc" style="--c:var(--kap)">
+      <h3>Kapolei</h3>
+      <div class="people"><span class="person poc">Lily</span><span class="person">Liz</span></div>
+      <small>POC: Lily</small>
+    </div>
+    <div class="loc" style="--c:var(--kai)">
+      <h3>Kailua</h3>
+      <div class="people"><span class="person poc">Jay</span></div>
+      <small>POC: Jay</small>
+    </div>
+  </div>
+
+  <div class="shared">
+    <div class="shared-head">
+      <h3>Everyone on the location desks does all three</h3>
+      <div class="people"><span class="person">Pai</span><span class="person">Shaira</span><span class="person">Lily</span><span class="person">Liz</span><span class="person">Jay</span></div>
+    </div>
+  <div class="duties">
+    <div class="duty">
+      <span class="when am">Morning</span>
+      <h3>Inbound calls</h3>
+      <p>Answer incoming calls for your own location.</p>
+    </div>
+    <div class="duty">
+      <span class="when pm">Afternoon</span>
+      <h3>Appointment confirmations</h3>
+      <p>Confirm appointments 24 hours and 48 hours out for your location.</p>
+    </div>
+    <div class="duty">
+      <span class="when">All day</span>
+      <h3>Other department requests</h3>
+      <p>Call other departments when needed, including Insurance team requests.</p>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- Call team -->
+<section>
+  <div class="sec-head">
+    <h2>Call team</h2>
+    <p>Inbound, outbound, SMS queries and NP list — all 3 locations</p>
+  </div>
+  <div class="callteam">
+    <div class="roster">
+      <h3>Team</h3>
+      <div class="people"><span class="person">Keyvin</span><span class="person">Raine</span></div>
+      <p class="note">Covers morning through afternoon. Keyvin is also the PLC POC.</p>
+    </div>
+    <div>
+      <ol class="priority" aria-label="Call team priorities, highest first">
+        <li><div><b>Pure inbound, morning to afternoon</b><span>Inbound comes first all shift.</span></div></li>
+        <li><div><b>Stabilize the call rate</b><span>When the queue is high, stay on inbound until it settles.</span></div></li>
+        <li><div><b>Missed calls, voicemails and SMS</b><span>Return all of them for PLC, Kapolei and Kailua.</span></div></li>
+        <li><div><b>NP list — Fridays only</b><span>Call new patient requests from the NP sheet every Friday.</span></div></li>
+      </ol>
+      <p class="note"><b>When needed:</b> if production shows lots of empty slots, work the Reschedule queues or Opportunity Miner to fill them.</p>
+    </div>
+  </div>
+</section>
+
+<!-- POCs -->
+<section>
+  <div class="sec-head">
+    <h2>Points of contact</h2>
+    <p>Production check and provider monitoring</p>
+  </div>
+  <div class="shared">
+    <div class="shared-head">
+      <h3>All three POCs share these responsibilities</h3>
+      <div class="people">
+        <span class="person"><span class="dot" style="--c:var(--plc)"></span>Keyvin · PLC</span>
+        <span class="person"><span class="dot" style="--c:var(--kap)"></span>Lily · Kapolei</span>
+        <span class="person"><span class="dot" style="--c:var(--kai)"></span>Jay · Kailua</span>
+      </div>
+    </div>
+    <div class="duties">
+      <div class="duty">
+        <h3>Check production</h3>
+        <p>Review production for your location every day.</p>
+      </div>
+      <div class="duty">
+        <h3>Monitor the 3 doctors</h3>
+        <p>Watch the schedules for Dr. Moktan (Barsha), Dr. Wang and Dr. Cucolo, beyond chart prep.</p>
+      </div>
+      <div class="duty">
+        <h3>Insurance check</h3>
+        <p>Make sure no patient is booked with a doctor who isn't in-network for their insurance. Use the guide below.</p>
+      </div>
+    </div>
+  </div>
+
+<div class="ins-wrap">
+    <h3>Insurance booking guide</h3>
+    <p>Which insurances each doctor can currently be booked with.</p>
+    <div class="poc-table ins-table">
+      <table>
+        <thead><tr><th>Insurance</th><th>Dr. Moktan (Barsha)</th><th>Dr. Wang</th><th>Dr. Cucolo</th></tr></thead>
+        <tbody>
+          <tr><td>Delta Dental<small>All states</small></td><td><span class="st ok">OK to book</span></td><td><span class="st ok">OK to book</span></td><td><span class="st ok">OK to book</span></td></tr>
+          <tr><td>HMSA</td><td><span class="st ok">OK to book</span></td><td><span class="st no">Don't book</span><small>Pending</small></td><td><span class="st ok">OK to book</span></td></tr>
+          <tr><td>HMAA</td><td><span class="st no">Don't book</span><small>Pending</small></td><td><span class="st no">Don't book</span><small>Pending</small></td><td><span class="st cond">OK from 9/30/2026</span><small>Dates of service on or after 9/30/2026 only</small></td></tr>
+          <tr><td>HDS &amp; Medicaid<small>Kapolei, Kailua and Pearl City</small></td><td><span class="st cond">OK — verify active</span></td><td><span class="st cond">OK — verify active</span></td><td><span class="st cond">OK — verify active</span></td></tr>
+          <tr><td>Other PPOs</td><td><span class="st no">Don't assume in-network</span><small>In progress — check first</small></td><td><span class="st no">Don't assume in-network</span><small>In progress — check first</small></td><td><span class="st no">Don't assume in-network</span><small>In progress — check first</small></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="alert"><b>Always verify</b><span>HDS and Medicaid must be checked as active before booking, even when it's the secondary insurance.</span></div>
+  </div>
+</section>
+
+<!-- Checklists -->
+<section>
+  <div class="sec-head">
+    <h2>Today's checklist</h2>
+    <div class="check-head-actions">
+      <span class="note" id="checkDate" style="margin:0"></span>
+      <button type="button" class="ghost" id="resetChecks">Clear today</button>
+    </div>
+  </div>
+  <div class="who" id="who" role="group" aria-label="Choose team member"></div>
+  <div class="checklist" id="checklist"></div>
+</section>
+
+</div>
+
+<div id="view-notes" role="tabpanel" aria-labelledby="tab-notes" hidden>
+  <div class="sec-head">
+    <h2>Message MJ</h2>
+    <p>Questions, challenges, opportunities — sent straight to MJ on WhatsApp</p>
+  </div>
+  <div class="notes-layout">
+    <form class="composer" id="noteForm" novalidate>
+      <h3>Write your message</h3>
+      <p>Fill this in and WhatsApp opens with it ready to send.</p>
+      <div class="field">
+        <label for="nFrom">Your name</label>
+        <select id="nFrom" required>
+          <option value="">Choose your name</option>
+          <option>Pai</option><option>Shaira</option><option>Lily</option><option>Liz</option><option>Jay</option><option>Keyvin</option><option>Raine</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="lbl" id="typeLbl">What kind of message?</span>
+        <div class="types" id="nTypes" role="group" aria-labelledby="typeLbl"></div>
+      </div>
+      <div class="field">
+        <label for="nLoc">Location</label>
+        <select id="nLoc"><option>All locations</option><option>PLC</option><option>Kapolei</option><option>Kailua</option></select>
+      </div>
+      <div class="field">
+        <label for="nText">Details</label>
+        <textarea id="nText" maxlength="2000" placeholder="e.g. Patient with HMAA asked for Dr. Wang — had to move them to Dr. Cucolo. Can we get a script for this?"></textarea>
+      </div>
+      <a class="primary wa" id="nSend" href="https://wa.me/639665476612" target="_blank" rel="noopener noreferrer">Send to MJ on WhatsApp</a>
+      <p class="form-msg" id="formMsg" aria-live="polite"></p>
+    </form>
+
+    <div class="wa-side">
+      <div class="wa-card">
+        <h3>Quick question?</h3>
+        <p>Message MJ directly without filling in the form.</p>
+        <a class="wa-btn" href="https://wa.me/639665476612" target="_blank" rel="noopener noreferrer">Open WhatsApp chat</a>
+        <p class="wa-num">+63 966 547 6612</p>
+      </div>
+      <div class="wa-card">
+        <h3>Preview</h3>
+        <pre class="wa-preview" id="waPreview"></pre>
+      </div>
+      <div class="wa-card subtle">
+        <h3>Good things to send</h3>
+        <p>Something that was challenging today, an opportunity you spotted in the schedule, anything you want MJ to check, or a topic to bring up with the team.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="view-report" role="tabpanel" aria-labelledby="tab-report" hidden>
+  <div class="sec-head">
+    <h2>Bookings report</h2>
+    <div class="seg" role="group" aria-label="Month" id="rMonth">
+      <button type="button" data-v="Aug" aria-pressed="false">August</button>
+      <button type="button" data-v="Sep" aria-pressed="true">September</button>
+      <button type="button" data-v="Both" aria-pressed="false">Aug + Sep</button>
+    </div>
+  </div>
+  <p class="note" style="margin-top:-.4rem">Snapshot from the Appointment Logs and Reschedules &amp; Cancellations tabs, August–September 2026. Counts only — no patient details are stored here.</p>
+
+  <div class="stats" id="rStats"></div>
+
+  <div class="report-grid">
+    <div class="rcard">
+      <h3>Reschedule queue: why patients reschedule</h3>
+      <p class="rsub">Reschedules and cancellations by reason</p>
+      <div id="rReasons"></div>
+      <p class="rsub" style="margin-top:1rem">How close to the appointment</p>
+      <div id="rPolicy"></div>
+      <p class="rsub" style="margin-top:1rem">Top reasons by location</p>
+      <div class="poc-table">
+        <table class="mini" id="rReasonLoc"></table>
+      </div>
+    </div>
+    <div class="rcard">
+      <h3>Top referral sources</h3>
+      <p class="rsub">New patients booked, by how they found us</p>
+      <div id="rRefs"></div>
+      <p class="rsub" style="margin-top:1rem">New patients booked by location</p>
+      <div id="rNpLoc"></div>
+    </div>
+  </div>
+</div>
+
+<footer>Morning shift runs until 12:00 PM Hawaii time; Auto switches to Afternoon after that. Checklists reset each day.</footer>
+</div>
+
+<script>
+(function(){
+  const TZ = "Pacific/Honolulu";
+  const store = {
+    get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+    set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+  };
+
+  // ---------- Data ----------
+  const LOC_DESK = {
+    am: "Inbound calls for the location",
+    pm: "Appointment confirmations",
+    both: "Other department calls (e.g. Insurance team requests)"
+  };
+  const people = {
+    MJ:     {role:"Team Lead", loc:"All", lead:true},
+    Pai:    {role:"PLC desk", loc:"PLC"},
+    Shaira: {role:"PLC desk", loc:"PLC"},
+    Lily:   {role:"Kapolei desk · POC", loc:"Kapolei", poc:true},
+    Liz:    {role:"Kapolei desk", loc:"Kapolei"},
+    Jay:    {role:"Kailua desk · POC", loc:"Kailua", poc:true},
+    Keyvin: {role:"Call team · PLC POC", loc:"All", poc:true, call:true},
+    Raine:  {role:"Call team", loc:"All", call:true}
+  };
+  const deskTasks = {
+    am: ["Answer inbound calls for my location"],
+    pm: ["Appointment confirmations — 24 hours out","Appointment confirmations — 48 hours out"],
+    any:["Handle other department requests (Insurance team, etc.)"]
+  };
+  const callTasks = {
+    am: ["Pure inbound — stay on the phones","Keep call rate stable when the queue is high"],
+    pm: ["Pure inbound until end of afternoon","Keep call rate stable when the queue is high"],
+    any:["Return missed calls — PLC, Kapolei, Kailua","Return voicemails — PLC, Kapolei, Kailua","Answer SMS queries — PLC, Kapolei, Kailua"],
+    friday:["Call new patient requests from the NP sheet"],
+    asNeeded:["If production has lots of empty slots: work the Reschedule queues","If production has lots of empty slots: work Opportunity Miner"]
+  };
+  function isFriday(){ return new Intl.DateTimeFormat("en-US",{timeZone:TZ,weekday:"long"}).format(new Date())==="Friday"; }
+  const pocTasks = ["Check today's production","Review schedules for Dr. Moktan, Dr. Wang and Dr. Cucolo","No HMSA booked with Dr. Wang","No HMAA booked with Dr. Wang or Dr. Moktan (Dr. Cucolo only for dates of service on/after 9/30/2026)","HDS and Medicaid verified active, including as secondary","Other PPOs not assumed in-network","Confirm charts are prepped"];
+
+  // ---------- Shift ----------
+  let shiftMode = "auto";
+  function hawaiiNow(){
+    const parts = new Intl.DateTimeFormat("en-US",{timeZone:TZ,hour:"numeric",hour12:false}).formatToParts(new Date());
+    return parseInt(parts.find(p=>p.type==="hour").value,10) % 24;
+  }
+  function currentShift(){ return shiftMode==="auto" ? (hawaiiNow() < 12 ? "am" : "pm") : shiftMode; }
+  function todayKey(){ return new Intl.DateTimeFormat("en-CA",{timeZone:TZ}).format(new Date()); }
+
+  function renderNow(){
+    const s = currentShift();
+    document.getElementById("nowTitle").textContent = s==="am" ? "Morning shift — who's on what" : "Afternoon shift — who's on what";
+    const t = new Intl.DateTimeFormat("en-US",{timeZone:TZ,weekday:"long",month:"long",day:"numeric",hour:"numeric",minute:"2-digit"}).format(new Date());
+    document.getElementById("nowClock").textContent = t + " (Hawaii)" + (shiftMode==="auto" ? "" : " · viewing " + (s==="am"?"morning":"afternoon"));
+    const deskNow = s==="am" ? "Inbound calls" : "Appointment confirmations (24 hr and 48 hr)";
+    const cards = [
+      {h:"MJ — Team Lead", b:"Insurance verification and treatment planning" + (isFriday() ? ", plus the NP list update (Friday)" : "")},
+      {h:"PLC — Pai, Shaira", b: deskNow},
+      {h:"Kapolei — Lily, Liz", b: deskNow},
+      {h:"Kailua — Jay", b: deskNow},
+      {h:"Call team — Keyvin, Raine", b: "Pure inbound first, then missed calls, voicemails and SMS" + (isFriday() ? ", plus the NP list (Friday)" : "")}
+    ];
+    document.getElementById("nowGrid").innerHTML = cards.map(c=>`<div class="now-card"><strong>${c.h}</strong><span>${c.b}</span></div>`).join("");
+    document.querySelectorAll(".shift-toggle button").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.shift===shiftMode)));
+  }
+  document.querySelectorAll(".shift-toggle button").forEach(b=>b.addEventListener("click",()=>{
+    shiftMode = b.dataset.shift; store.set("planner-shift", shiftMode); renderNow(); renderChecklist();
+  }));
+
+  function escapeHtml(s){ return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+  // ---------- Checklist ----------
+  let who = store.get("planner-who","Pai");
+  if(!people[who]) who = "Pai";
+  function tasksFor(name){
+    const p = people[name], s = currentShift(), groups = [];
+    if(p.lead){
+      groups.push({title:"Main task", items:["Insurance verification","Treatment planning"]});
+      groups.push({title:"Team oversight", items:["Monitor cancellation rate","Monitor production","Generate call lists for the team","Check call rate and opportunity — act if dropping","Call listening","Review Shaira's calls and bookings"]});
+      if(isFriday()) groups.push({title:"Friday", items:["Generate and update the New Patient list"]});
+      return groups;
+    }
+    if(p.call){
+      groups.push({title: s==="am"?"Morning":"Afternoon", items: callTasks[s]});
+      groups.push({title:"Throughout the day", items: callTasks.any});
+      if(isFriday()) groups.push({title:"Friday", items: callTasks.friday});
+      groups.push({title:"Only when needed", items: callTasks.asNeeded});
+    } else {
+      groups.push({title: s==="am"?"Morning":"Afternoon", items: deskTasks[s]});
+      groups.push({title:"As needed", items: deskTasks.any});
+    }
+    if(p.poc) groups.push({title:"POC duties" + (name==="Keyvin" ? " — PLC" : " — " + p.loc), items: pocTasks});
+    return groups;
+  }
+  function renderWho(){
+    document.getElementById("who").innerHTML = Object.keys(people).map(n=>`<button type="button" aria-pressed="${n===who}" data-n="${n}">${n}</button>`).join("");
+    document.querySelectorAll("#who button").forEach(b=>b.addEventListener("click",()=>{ who=b.dataset.n; store.set("planner-who",who); renderWho(); renderChecklist(); }));
+  }
+  function renderChecklist(){
+    const day = todayKey(); const key = "planner-checks-"+day;
+    const done = store.get(key, {});
+    document.getElementById("checkDate").textContent = new Intl.DateTimeFormat("en-US",{timeZone:TZ,month:"short",day:"numeric"}).format(new Date()) + " · " + people[who].role;
+    const groups = tasksFor(who);
+    let total=0, checked=0;
+    const html = groups.map(g=>`<h3>${g.title}</h3>` + g.items.map(it=>{
+      const id = who+"|"+it; total++; if(done[id]) checked++;
+      return `<label><input type="checkbox" data-id="${escapeHtml(id)}" ${done[id]?"checked":""}><span>${it}</span></label>`;
+    }).join("")).join("");
+    document.getElementById("checklist").innerHTML = `<div class="progress" aria-hidden="true"><div style="width:${total?checked/total*100:0}%"></div></div>` + html;
+    document.querySelectorAll("#checklist input").forEach(cb=>cb.addEventListener("change",()=>{
+      const d = store.get(key,{}); d[cb.dataset.id] = cb.checked; store.set(key,d); renderChecklist();
+    }));
+  }
+  document.getElementById("resetChecks").addEventListener("click",()=>{
+    const key = "planner-checks-"+todayKey(); const d = store.get(key,{});
+    Object.keys(d).forEach(k=>{ if(k.startsWith(who+"|")) delete d[k]; });
+    store.set(key,d); renderChecklist();
+  });
+
+
+  // ---------- Tabs ----------
+  const tabs = {planner: document.getElementById("tab-planner"), notes: document.getElementById("tab-notes"), report: document.getElementById("tab-report")};
+  function showTab(name){
+    Object.entries(tabs).forEach(([k,b])=>{
+      const on = k===name; b.setAttribute("aria-selected", String(on));
+      document.getElementById("view-"+k).hidden = !on;
+    });
+    store.set("planner-tab", name);
+  }
+  tabs.planner.addEventListener("click",()=>showTab("planner"));
+  tabs.notes.addEventListener("click",()=>showTab("notes"));
+  tabs.report.addEventListener("click",()=>showTab("report"));
+  { const t=store.get("planner-tab","planner"); showTab(tabs[t]?t:"planner"); }
+
+  // ---------- Message MJ (WhatsApp) ----------
+  const WA = "639665476612";
+  const TYPES = [
+    {k:"Challenge today", c:"#B4412F"},
+    {k:"Question", c:"#2F5FA8"},
+    {k:"Opportunity", c:"#4C8A3F"},
+    {k:"Please check", c:"#6B5B95"},
+    {k:"Discuss with team", c:"#0E7C86"}
+  ];
+  let selType = TYPES[0].k;
+  const typesEl = document.getElementById("nTypes");
+  const fromSel = document.getElementById("nFrom"), locSel = document.getElementById("nLoc"), txt = document.getElementById("nText");
+  const sendBtn = document.getElementById("nSend"), msg = document.getElementById("formMsg"), prev = document.getElementById("waPreview");
+  typesEl.innerHTML = TYPES.map(t=>`<button type="button" data-k="${t.k}" style="--t:${t.c}" aria-pressed="${t.k===selType}">${t.k}</button>`).join("");
+  typesEl.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{
+    selType=b.dataset.k; typesEl.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); updateWa();
+  }));
+  fromSel.value = store.get("planner-note-from","");
+  function buildText(){
+    const from = fromSel.value || "(your name)";
+    const body = txt.value.trim() || "(your message)";
+    return `*${selType}*\nFrom: ${from} · ${locSel.value}\n\n${body}`;
+  }
+  function updateWa(){
+    const ready = fromSel.value && txt.value.trim();
+    prev.textContent = buildText().replace(/\*/g,"");
+    sendBtn.href = "https://wa.me/" + WA + "?text=" + encodeURIComponent(buildText());
+    sendBtn.setAttribute("aria-disabled", String(!ready));
+    if(ready){ msg.textContent=""; msg.className="form-msg"; }
+  }
+  fromSel.addEventListener("change",()=>{ store.set("planner-note-from", fromSel.value); updateWa(); });
+  locSel.addEventListener("change",updateWa);
+  txt.addEventListener("input",updateWa);
+  sendBtn.addEventListener("click",e=>{
+    if(!fromSel.value){ e.preventDefault(); msg.textContent="Choose your name first."; msg.className="form-msg err"; fromSel.focus(); return; }
+    if(!txt.value.trim()){ e.preventDefault(); msg.textContent="Write your message first."; msg.className="form-msg err"; txt.focus(); return; }
+    msg.className="form-msg"; msg.textContent="WhatsApp is opening — tap Send there. If nothing opened, use the Open WhatsApp chat button.";
+  });
+  document.getElementById("noteForm").addEventListener("submit",e=>e.preventDefault());
+  updateWa();
+
+  // ---------- Bookings report ----------
+  const REPORT = {"Aug": {"total": 819, "existing": 602, "new": 216, "exType": {"Recalls": 441, "LOE": 84, "Treatment": 64, "Consult": 5, "Post Op": 5, "Oral Surgery": 3}, "exLoc": {"PLC": 308, "Kapolei": 201, "Kailua": 88}, "exTypeLoc": {"Consult": {"Kailua": 1, "Kapolei": 1, "PLC": 3}, "LOE": {"Kailua": 17, "Kapolei": 28, "PLC": 35}, "Oral Surgery": {"Kailua": 0, "Kapolei": 0, "PLC": 2}, "Post Op": {"Kailua": 2, "Kapolei": 2, "PLC": 1}, "Recalls": {"Kailua": 63, "Kapolei": 149, "PLC": 229}, "Treatment": {"Kailua": 5, "Kapolei": 21, "PLC": 38}}, "ref": {"Patient": 46, "Google": 43, "Referred": 22, "Relatives": 18, "Drive By": 18, "Insurance": 18, "Word of Mouth": 13, "Pediatrician": 12, "Other Dental Office": 8, "Not recorded": 4, "Neighbor": 3, "RP used to be a patient": 3, "Walk-in": 2, "Signage": 2, "ChatGPT": 2, "Facebook": 1, "Community Case Management": 1}, "npLoc": {"Kailua": 81, "PLC": 78, "Kapolei": 57}}, "Sep": {"total": 509, "existing": 285, "new": 186, "exType": {"Recalls": 195, "LOE": 62, "Treatment": 22, "Consult": 5, "Post Op": 1}, "exLoc": {"PLC": 143, "Kapolei": 106, "Kailua": 36}, "exTypeLoc": {"Consult": {"Kailua": 0, "Kapolei": 4, "PLC": 1}, "LOE": {"Kailua": 10, "Kapolei": 17, "PLC": 35}, "Post Op": {"Kailua": 0, "Kapolei": 0, "PLC": 1}, "Recalls": {"Kailua": 25, "Kapolei": 75, "PLC": 95}, "Treatment": {"Kailua": 1, "Kapolei": 10, "PLC": 11}}, "ref": {"Patient": 38, "Google": 30, "Referred": 20, "Neighbor": 17, "Insurance": 15, "Drive By": 15, "Relatives": 12, "Word of Mouth": 11, "Other Dental Office": 9, "Pediatrician": 7, "RP used to be a patient": 5, "Safari": 3, "Not recorded": 1, "Facebook": 1, "Walk-in": 1, "Walk by": 1}, "npLoc": {"PLC": 69, "Kailua": 67, "Kapolei": 50}}};
+  const RESCHED = {"Aug": {"total": 1014, "reason": {"Canceled by office": 245, "Other Commitments": 146, "Work conflict": 143, "School Schedule Conflict": 136, "Sickness": 103, "Insurance Issue": 32, "Did not specify": 31, "Changed Dentist": 22, "Relocated": 18, "Emergency": 17, "Transportation Issues": 16, "Not on Island": 15, "Duplicate": 15, "Weather issues": 14, "Not needed anymore": 12, "Not feeling ready": 8, "Location Issue": 8, "Short Call List": 6, "Requested by office": 6, "Not recorded": 4, "Financial reasons": 4, "Wants sooner Appt": 3, "Not preferred but scheduled by FD": 2, "Forgot appointment": 2, "Siblings nort scheduled together": 1, "Dissatisfied with Dentist": 1, "Prophy completed": 1, "Transition to GP": 1, "Ortho Issues": 1, "RP doesn't want the tx": 1}, "policy": {"Outside 3 Days": 513, "Inside 3 Days": 294, "Same Day": 206, "Not recorded": 1}, "loc": {"PLC": 454, "Kapolei": 372, "Kailua": 188}, "rLoc": {"Canceled by office": {"Kailua": 59, "Kapolei": 101, "PLC": 85}, "Changed Dentist": {"Kailua": 3, "Kapolei": 12, "PLC": 7}, "Did not specify": {"Kailua": 1, "Kapolei": 15, "PLC": 15}, "Dissatisfied with Dentist": {"Kailua": 0, "Kapolei": 0, "PLC": 1}, "Duplicate": {"Kailua": 1, "Kapolei": 5, "PLC": 9}, "Emergency": {"Kailua": 6, "Kapolei": 5, "PLC": 6}, "Financial reasons": {"Kailua": 0, "Kapolei": 0, "PLC": 4}, "Forgot appointment": {"Kailua": 0, "Kapolei": 2, "PLC": 0}, "Insurance Issue": {"Kailua": 23, "Kapolei": 4, "PLC": 5}, "Location Issue": {"Kailua": 0, "Kapolei": 1, "PLC": 7}, "Not feeling ready": {"Kailua": 0, "Kapolei": 4, "PLC": 4}, "Not needed anymore": {"Kailua": 1, "Kapolei": 7, "PLC": 4}, "Not on Island": {"Kailua": 3, "Kapolei": 2, "PLC": 10}, "Not preferred but scheduled by FD": {"Kailua": 0, "Kapolei": 0, "PLC": 2}, "Not recorded": {"Kailua": 0, "Kapolei": 4, "PLC": 0}, "Ortho Issues": {"Kailua": 0, "Kapolei": 1, "PLC": 0}, "Other Commitments": {"Kailua": 28, "Kapolei": 45, "PLC": 73}, "Prophy completed": {"Kailua": 0, "Kapolei": 0, "PLC": 1}, "RP doesn't want the tx": {"Kailua": 0, "Kapolei": 1, "PLC": 0}, "Relocated": {"Kailua": 5, "Kapolei": 6, "PLC": 7}, "Requested by office": {"Kailua": 0, "Kapolei": 6, "PLC": 0}, "School Schedule Conflict": {"Kailua": 25, "Kapolei": 46, "PLC": 65}, "Short Call List": {"Kailua": 0, "Kapolei": 5, "PLC": 1}, "Siblings nort scheduled together": {"Kailua": 0, "Kapolei": 1, "PLC": 0}, "Sickness": {"Kailua": 9, "Kapolei": 42, "PLC": 52}, "Transition to GP": {"Kailua": 0, "Kapolei": 0, "PLC": 1}, "Transportation Issues": {"Kailua": 1, "Kapolei": 6, "PLC": 9}, "Wants sooner Appt": {"Kailua": 0, "Kapolei": 0, "PLC": 3}, "Weather issues": {"Kailua": 2, "Kapolei": 2, "PLC": 10}, "Work conflict": {"Kailua": 21, "Kapolei": 49, "PLC": 73}}, "type": {"Recalls": 776, "Treatment": 202, "LOE": 28, "Consult": 8}}, "Sep": {"total": 883, "reason": {"Canceled by office": 190, "Work conflict": 133, "Sickness": 121, "Other Commitments": 106, "School Schedule Conflict": 84, "Wants sooner Appt": 33, "Not on Island": 32, "Did not specify": 28, "Emergency": 28, "Relocated": 26, "Insurance Issue": 16, "Transportation Issues": 15, "Not needed anymore": 11, "Not recorded": 9, "Short Call List": 8, "Duplicate": 7, "Location Issue": 5, "Not feeling ready": 5, "Ortho Issues": 4, "Not preferred but scheduled by FD": 4, "Changed Dentist": 4, "Financial reasons": 3, "Incorrectly booked by office": 3, "Cleaning done on diff office": 3, "Transition to GP": 1, "Prophy completed": 1, "Forgot appointment": 1, "Not eligible": 1, "Same day appt with siblings": 1}, "policy": {"Outside 3 Days": 507, "Inside 3 Days": 248, "Same Day": 124, "Not recorded": 4}, "loc": {"Kapolei": 414, "PLC": 351, "Kailua": 114, "Not recorded": 4}, "rLoc": {"Canceled by office": {"Kailua": 12, "Kapolei": 137, "PLC": 41}, "Changed Dentist": {"Kailua": 0, "Kapolei": 4, "PLC": 0}, "Cleaning done on diff office": {"Kailua": 0, "Kapolei": 0, "PLC": 3}, "Did not specify": {"Kailua": 3, "Kapolei": 14, "PLC": 11}, "Duplicate": {"Kailua": 0, "Kapolei": 1, "PLC": 6}, "Emergency": {"Kailua": 5, "Kapolei": 12, "PLC": 11}, "Financial reasons": {"Kailua": 0, "Kapolei": 2, "PLC": 1}, "Forgot appointment": {"Kailua": 0, "Kapolei": 1, "PLC": 0}, "Incorrectly booked by office": {"Kailua": 0, "Kapolei": 1, "PLC": 2}, "Insurance Issue": {"Kailua": 3, "Kapolei": 6, "PLC": 7}, "Location Issue": {"Kailua": 2, "Kapolei": 3, "PLC": 0}, "Not eligible": {"Kailua": 0, "Kapolei": 1, "PLC": 0}, "Not feeling ready": {"Kailua": 0, "Kapolei": 1, "PLC": 4}, "Not needed anymore": {"Kailua": 2, "Kapolei": 7, "PLC": 2}, "Not on Island": {"Kailua": 4, "Kapolei": 11, "PLC": 17}, "Not preferred but scheduled by FD": {"Kailua": 3, "Kapolei": 1, "PLC": 0}, "Not recorded": {"Kailua": 0, "Kapolei": 5, "PLC": 0}, "Ortho Issues": {"Kailua": 1, "Kapolei": 1, "PLC": 2}, "Other Commitments": {"Kailua": 14, "Kapolei": 38, "PLC": 54}, "Prophy completed": {"Kailua": 0, "Kapolei": 1, "PLC": 0}, "Relocated": {"Kailua": 4, "Kapolei": 17, "PLC": 5}, "Same day appt with siblings": {"Kailua": 0, "Kapolei": 1, "PLC": 0}, "School Schedule Conflict": {"Kailua": 17, "Kapolei": 33, "PLC": 34}, "Short Call List": {"Kailua": 0, "Kapolei": 1, "PLC": 7}, "Sickness": {"Kailua": 19, "Kapolei": 56, "PLC": 46}, "Transition to GP": {"Kailua": 0, "Kapolei": 1, "PLC": 0}, "Transportation Issues": {"Kailua": 5, "Kapolei": 3, "PLC": 7}, "Wants sooner Appt": {"Kailua": 8, "Kapolei": 7, "PLC": 18}, "Work conflict": {"Kailua": 12, "Kapolei": 48, "PLC": 73}}, "type": {"Recalls": 713, "Treatment": 157, "LOE": 7, "Not recorded": 4, "Consult": 2}}};
+  let rMonth = "Sep", refsAll = false, reasonsAll = false;
+  function sumObj(a,b){ const o={...a}; for(const k in b) o[k]=(o[k]||0)+b[k]; return o; }
+  function sumNested(a,b){ const o={}; new Set([...Object.keys(a),...Object.keys(b)]).forEach(k=>o[k]=sumObj(a[k]||{},b[k]||{})); return o; }
+  function pick(m){
+    if(m!=="Both") return {B:REPORT[m], R:RESCHED[m]};
+    const A=REPORT.Aug, S=REPORT.Sep, RA=RESCHED.Aug, RS=RESCHED.Sep;
+    return {
+      B:{total:A.total+S.total, existing:A.existing+S.existing, new:A.new+S.new, ref:sumObj(A.ref,S.ref), npLoc:sumObj(A.npLoc,S.npLoc)},
+      R:{total:RA.total+RS.total, reason:sumObj(RA.reason,RS.reason), policy:sumObj(RA.policy,RS.policy), loc:sumObj(RA.loc,RS.loc), rLoc:sumNested(RA.rLoc,RS.rLoc)}
+    };
+  }
+  const sorted = o => Object.entries(o).sort((a,b)=>b[1]-a[1]);
+  function bars(entries, total, color){
+    const max = entries.length ? entries[0][1] : 1;
+    return entries.map(([k,v])=>`<div class="bar-row"><span class="bl" title="${escapeHtml(k)}">${escapeHtml(k)}</span><div class="bar-track"><div style="width:${v/max*100}%;--b:${color}"></div></div><span class="bv">${v}<small>${Math.round(v/total*100)}%</small></span></div>`).join("");
+  }
+  function delta(cur, prev, goodUp){
+    if(rMonth!=="Sep") return "";
+    const d=cur-prev, pct=Math.round(d/prev*100), good = goodUp ? d>=0 : d<=0;
+    return `<div class="d ${good?"up":"down"}">${d>=0?"▲":"▼"} ${Math.abs(d)} (${Math.abs(pct)}%) vs August</div>`;
+  }
+  const late = R => (R.policy["Same Day"]||0)+(R.policy["Inside 3 Days"]||0);
+  function renderReport(){
+    const {B,R}=pick(rMonth), A=REPORT.Aug, RA=RESCHED.Aug;
+    document.getElementById("rStats").innerHTML = [
+      {v:B.total, l:"Appointments booked", p:A.total, up:true},
+      {v:B.new, l:"New patients booked", p:A.new, up:true},
+      {v:R.total, l:"Reschedules & cancellations", p:RA.total, up:false},
+      {v:late(R), l:"Late (same day or inside 3 days)", p:late(RA), up:false}
+    ].map(x=>`<div class="stat"><div class="v">${x.v.toLocaleString()}</div><div class="l">${x.l}</div>${delta(x.v,x.p,x.up)}</div>`).join("");
+
+    const reasons=sorted(R.reason), shownR = reasonsAll ? reasons : reasons.slice(0,10);
+    document.getElementById("rReasons").innerHTML = bars(shownR, R.total, "var(--warn)") +
+      (reasons.length>10 ? `<button type="button" class="more" id="reasonMore">${reasonsAll?"Show top 10":"Show all "+reasons.length+" reasons"}</button>` : "");
+    const rmo=document.getElementById("reasonMore"); if(rmo) rmo.addEventListener("click",()=>{ reasonsAll=!reasonsAll; renderReport(); });
+
+    const pol=["Same Day","Inside 3 Days","Outside 3 Days"].map(k=>[k,R.policy[k]||0]);
+    const pmax=Math.max(...pol.map(x=>x[1]));
+    document.getElementById("rPolicy").innerHTML = pol.map(([k,v])=>`<div class="bar-row"><span class="bl">${k}</span><div class="bar-track"><div style="width:${v/pmax*100}%;--b:${k==="Outside 3 Days"?"var(--kap)":k==="Same Day"?"var(--warn)":"var(--ilima)"}"></div></div><span class="bv">${v}<small>${Math.round(v/R.total*100)}%</small></span></div>`).join("");
+
+    const locs=["PLC","Kapolei","Kailua"];
+    document.getElementById("rReasonLoc").innerHTML = `<thead><tr><th>Reason</th>${locs.map(l=>`<th class="n">${l}</th>`).join("")}</tr></thead><tbody>` +
+      reasons.slice(0,8).map(([k])=>`<tr><td>${escapeHtml(k)}</td>${locs.map(l=>`<td class="n">${(R.rLoc[k]||{})[l]||0}</td>`).join("")}</tr>`).join("") +
+      `<tr><td><b>All reasons</b></td>${locs.map(l=>`<td class="n"><b>${R.loc[l]||0}</b></td>`).join("")}</tr></tbody>`;
+
+    const refs=sorted(B.ref), shown = refsAll ? refs : refs.slice(0,8);
+    document.getElementById("rRefs").innerHTML = bars(shown, B.new, "var(--ilima)") +
+      (refs.length>8 ? `<button type="button" class="more" id="refMore">${refsAll?"Show top 8":"Show all "+refs.length+" sources"}</button>` : "");
+    const rm=document.getElementById("refMore"); if(rm) rm.addEventListener("click",()=>{ refsAll=!refsAll; renderReport(); });
+    document.getElementById("rNpLoc").innerHTML = bars(sorted(B.npLoc), B.new, "var(--kai)");
+  }
+  document.querySelectorAll("#rMonth button").forEach(b=>b.addEventListener("click",()=>{
+    rMonth=b.dataset.v; document.querySelectorAll("#rMonth button").forEach(x=>x.setAttribute("aria-pressed",String(x===b))); renderReport();
+  }));
+  renderReport();
+
+  shiftMode = store.get("planner-shift","auto");
+  if(!["auto","am","pm"].includes(shiftMode)) shiftMode="auto";
+  renderNow(); renderWho(); renderChecklist();
+  setInterval(()=>{ renderNow(); }, 60000);
+})();
+</script>
+</body>
+</html>
